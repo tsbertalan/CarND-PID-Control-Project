@@ -27,6 +27,7 @@ public:
   bool twiddle(double error);
   std::vector<double> get_params();
   void set_params(std::vector<double> new_parameters);
+  void set_diff_params(std::vector<double> new_diff_params);
 };
 
 class TwiddlerManager {

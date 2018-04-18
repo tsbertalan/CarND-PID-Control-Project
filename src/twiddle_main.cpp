@@ -3,10 +3,10 @@
 #include "json.hpp"
 #include "PID.h"
 #include "twiddle.h"
-#include <math.h>
+#include <cmath>
 #include <algorithm>  // std::min, std::max
 
-#define TARGETSPEED 20.0
+#define TARGETSPEED 12.0
 #define CREEPSPEED 3.0
 #define MAXANGLE 25.0
 
@@ -42,13 +42,21 @@ int main() {
 
     PID pid_steering;
     PID pid_throttle;
-    std::vector<PID*> pids = {&pid_steering, &pid_throttle};
-    TwiddlerManager twiddler_manager(pids, 100);
-
 
     // TODO: Need to tune these.
-    pid_steering.Init(0.1, 0.0003, 3);
+    // .13 .0002274 3.3
+    // [0.24, 0.000468, 2, ]
+    pid_steering.Init(.2, .0006, 2);
     pid_throttle.Init(0.3, 0, 0.02);
+    
+    std::vector<PID*> pids = {&pid_steering};//, &pid_throttle};
+
+    // Time-average the CTE to get an error value for Twiddle.
+    // nsamples = 4 is far too small, but it produces the segfault quickly.
+    int nsamples = 4;
+    TwiddlerManager twiddler_manager(pids, nsamples);
+
+
 
     h.onMessage([&pid_steering, &pid_throttle, &twiddler_manager](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
         // "42" at the start of the message means there's a websocket message event.
@@ -94,7 +102,7 @@ int main() {
                     // std::cout << msg << std::endl;
                     ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 
-                    twiddler_manager.process_error(cte);
+                    twiddler_manager.process_error(fabs(cte));
                 }
             } else {
                 // Manual driving
