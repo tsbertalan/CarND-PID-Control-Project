@@ -23,6 +23,8 @@ set(sources src/PID.cpp src/main.cpp)
 add_executable(pid ${sources})
 target_link_libraries(pid z ssl uv uWS)
 
-set(sources_twiddle src/PID.cpp src/twiddle.cpp)
+set(sources_twiddle src/PID.cpp src/twiddle.cpp src/twiddle_main.cpp)
 add_executable(twiddle ${sources_twiddle})
 target_link_libraries(twiddle z ssl uv uWS)
+
+set(CMAKE_BUILD_TYPE Debug)
