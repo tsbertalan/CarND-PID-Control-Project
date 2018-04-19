@@ -40,8 +40,7 @@ bool Twiddler::twiddle(double error) {
 		// Increment the count-of-loops.
 		iterations++;
 
-		cout << endl << "=====================" << endl;
-		cout << "Twiddle iteration " << iterations << endl;
+		cout << endl << "=============Twiddle iteration " << iterations << "==============" << endl;
 
 		// Sum the increment vector.
 		double sdp = 0;
@@ -71,7 +70,7 @@ bool Twiddler::twiddle(double error) {
 	// We haven't tried this dp yet.
 	// Try an increase.
 	if(last_change == NONE) {
-		cout << endl << "------------i=" << i_param << "------------" << endl;
+		cout << endl << "----------------------i=" << i_param << "----------------------" << endl;
 		cout << "Try increasing p[" << i_param << "]." << endl;
 		parameters[i_param] += diff_parameters[i_param];
 		vec_print(parameters, "p");
@@ -82,7 +81,7 @@ bool Twiddler::twiddle(double error) {
 
 		// If it succeeded, accelerate.
 		if(check_error(error)) {
-			cout << "; increase succeeded!" << endl;
+			cout << "; increase of p[" << i_param << "] succeeded!" << endl;
 			succeed(error);
 
 		// If it failed, try a decrease.
@@ -99,7 +98,7 @@ bool Twiddler::twiddle(double error) {
 		
 		// If it succeeded, accelerate.
 		if(check_error(error)) {
-			cout << "; decrease succeeded!" << endl;
+			cout << "; decrease of p[" << i_param << "] succeeded!" << endl;
 			succeed(error);
 
 		} else {
@@ -181,9 +180,12 @@ bool Twiddler::is_converged() {
 }
 
 
-TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, double tol) {
+TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, double tol, unsigned int tmin=0) {
 	this->pids = pids;
 	this->tmax = tmax;
+	this->tmin = tmin;
+
+	num_discarded = 0;
 
 	lambda_mean = 1.0;
 	lambda_stdd = 1.0;
@@ -214,11 +216,16 @@ TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, dou
 void TwiddlerManager::process_error(double error) {
 
 	// Save the error history.
-	errors.push_back(error);
-	absolute_errors.push_back(fabs(error));
+
+	if(num_discarded >= tmin) {
+		errors.push_back(error);
+		absolute_errors.push_back(fabs(error));
+	} else {
+		num_discarded++;
+	}
 
 	// If we've added up enough errors, take a mean.
-	if(absolute_errors.size() >= tmax) {
+	if(errors.size() >= tmax - tmin) {
 
 		double mae = vec_mean(absolute_errors);
 		double sae = vec_stdd(absolute_errors, mae);
@@ -229,7 +236,7 @@ void TwiddlerManager::process_error(double error) {
 		double objective = lambda_mean * mae + lambda_stdd * se;
 
 		if(!twiddler.is_converged()) {
-			cout << "Run stats:" << endl;
+			cout << "Run stats (" << errors.size() << " samples):" << endl;
 			cout << "   >Mean absolute error = " << mae << endl;
 			cout << "    Stdd absolute error = " << sae << endl;
 			cout << "    Mean error          = " << me << endl;

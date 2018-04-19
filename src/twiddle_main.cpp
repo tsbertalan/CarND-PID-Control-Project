@@ -12,6 +12,7 @@
 #define CREEPSPEED 3.0
 #define MAXANGLE 25.0
 #define NSAMPLES 128
+#define NDISCARD 32
 #define TWIDDLETOL 0.0001
 
 // for convenience
@@ -57,7 +58,7 @@ int main() {
 
     // Time-average the CTE to get an error value for Twiddle.
     int nsamples = NSAMPLES;
-    TwiddlerManager twiddler_manager(pids, nsamples, TWIDDLETOL);
+    TwiddlerManager twiddler_manager(pids, nsamples, TWIDDLETOL, NDISCARD);
 
     h.onMessage([&pid_steering, &pid_throttle, &twiddler_manager](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
         // "42" at the start of the message means there's a websocket message event.

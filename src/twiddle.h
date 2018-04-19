@@ -48,12 +48,12 @@ private:
   std::vector<double> absolute_errors;
   std::vector<double> errors;
 
-  unsigned int tmax;
+  unsigned int tmin, tmax, num_discarded;
 
 public:
   double lambda_mean;
   double lambda_stdd;
-  TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, double tol);
+  TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, double tol, unsigned int tmin);
   void process_error(double error);
 
 };

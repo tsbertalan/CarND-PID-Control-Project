@@ -14,38 +14,53 @@ with open(fname, 'r') as f:
 
 parameter_history = []
 parameter_history_times = []
+
 diff_parameter_history = []
 diff_parameter_history_times = []
+
+std_history = []
+std_history_times = []
+
 mae_history = []
 mae_history_times = []
+
 t = 0
+i_param = 0
+t_call = lambda : t * nparam + i_param
 for l in lines:
     if l.startswith('p = '):
         exec(l)
         if len(p) == nparam:
             parameter_history.append(p)
-            parameter_history_times.append(t)
+            parameter_history_times.append(t_call())
     elif l.startswith('dp = '):
         exec(l)
         if len(dp) == nparam:
             diff_parameter_history.append(dp)
-            diff_parameter_history_times.append(t)
-    elif l.startswith('Mean absolute error'):
+            diff_parameter_history_times.append(t_call())
+    elif 'Mean absolute error' in l:
         mae_history.append(
             float(l.split('=')[1])
         )
-        mae_history_times.append(t)
-    elif l.startswith('Twiddle iteration'):
-        t = int(l.replace('Twiddle iteration', '').replace(':', ''))
+        mae_history_times.append(t_call())
+    elif 'Stdd error' in l:
+        std_history.append(
+            float(l.split('=')[1])
+        )
+        std_history_times.append(t_call())
+
+    elif 'Twiddle iteration' in l:
+        t = int(l.replace('Twiddle iteration', '').replace('=', '').replace(':', ''))
+    elif 'i=' in l:
+        i_param = int(l.replace('-', '').replace('i=', ''))
 
 diff_parameter_history = np.array(diff_parameter_history)
 parameter_history = np.array(parameter_history)
 
 fig, ax = plt.subplots()
-ax.plot(mae_history_times, mae_history, color='black')
-ax.set_xlabel('$t$ (Twiddle iterations)')
+ax.plot(mae_history_times, mae_history, color='black', label='MAE$(t)$')
+ax.plot(std_history_times, std_history, color='blue', label='STD$(t)$')
 
-ax.set_ylabel('MAE$(t)$', color='black')
 ax2 = ax.twinx()
 ax2.plot(
     diff_parameter_history_times,
@@ -53,6 +68,14 @@ ax2.plot(
 )
 ax2.set_ylabel('$\sum_i \Delta p_i(t)$', color='red')
 ax2.set_yscale('log')
+
+ax.grid(False)
+ax2.grid(False)
+
+ax.set_xlabel('Twiddle call count $t_c=t\cdot%d+i_{param}$' % nparam)
+ax.set_ylabel('objective components')
+ax.legend()
+
 fig.tight_layout()
 
 
