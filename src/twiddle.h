@@ -22,12 +22,19 @@ private:
   double best_error;
   last_change_t last_change;
 
+  bool declared_convergence;
+
+  void moveOn();
+  void succeed(double error);
+  void fail();
+
 public:
   Twiddler(int nparams, double tol);
   bool twiddle(double error);
   std::vector<double> get_params();
   void set_params(std::vector<double> new_parameters);
   void set_diff_params(std::vector<double> new_diff_params);
+  bool is_converged();
 };
 
 class TwiddlerManager {
@@ -41,7 +48,7 @@ private:
   int tmax;
 
 public:
-  TwiddlerManager(std::vector<PID*>& pids, int tmax);
+  TwiddlerManager(std::vector<PID*>& pids, int tmax, double tol);
   void process_error(double error);
 
 };

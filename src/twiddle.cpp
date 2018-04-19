@@ -24,7 +24,7 @@ void printvec(vector<T> v, string name) {
 }
 
 
-Twiddler::Twiddler(int nparams=6, double tol=0.001) {
+Twiddler::Twiddler(int nparams=6, double tol=0.0001) {
 	vector<double> parameters(nparams, 0);
 	vector<double> diff_parameters(nparams, DEFAULT_DIFF_PARAMS);
 
@@ -32,33 +32,33 @@ Twiddler::Twiddler(int nparams=6, double tol=0.001) {
 	printvec(parameters, "p");
 	printvec(diff_parameters, "dp");
 
-	i_param = -1;
+	i_param = 0;
 	iterations = 0;
 	this->tol = tol;
 	best_error = std::numeric_limits<double>::infinity();
 	last_change = NONE;
+
+	declared_convergence = false;
 }
 
 
 bool Twiddler::twiddle(double error) {
 
-	printvec(parameters, "p");
-	printvec(diff_parameters, "dp");
-
-	cout << "Best error is " << best_error << "." << endl;
-
 	// Save the error history.
 	errors.push_back(error);
 
-	// Always increment the parameter index.
-	i_param++;
+	// If we previously declared convergence, just exit.
+	if(declared_convergence)
+		return true;
 
 	// If we've finished the last parameter loop, check for convergence.
 	if(i_param == parameters.size()) {
-		cout << "Finished parameter loop!" << endl;
 
 		// Increment the count-of-loops.
 		iterations++;
+
+		cout << endl << "=====================" << endl;
+		cout << "Twiddle iteration " << iterations << ":" << endl;
 
 		// Sum the increment vector.
 		double sdp = 0;
@@ -69,9 +69,12 @@ bool Twiddler::twiddle(double error) {
 	    // Check for convergence.
 	    if(sdp <= tol) {
 	    	// If we've converged, just say so.
+	    	cout << "Converged! sum(dp)=" << sdp << " <= tol=" << tol << endl;
+	    	declared_convergence = true;
 	    	return true;
 	    } else {
 	    	// If we haven't converged, reset the counter for the next loop.
+	    	cout << "Not yet converged. sum(dp)=" << sdp << " > tol=" << tol << endl;
 			i_param = 0;
 	    }
 	}
@@ -82,14 +85,13 @@ bool Twiddler::twiddle(double error) {
 	// Depending on what we did last time an error was passed, 
 	// we can now do one of three things.
 
-	last_change_t new_change;
-
 	// We haven't tried this dp yet.
 	// Try an increase.
 	if(last_change == NONE) {
-		cout << "Try an increase." << endl;
+		cout << endl << "Try increasing p[" << i_param << "]." << endl;
 		parameters[i_param] += diff_parameters[i_param];
-		new_change = INCREASE;
+		printvec(parameters, "p");
+		last_change = INCREASE;
 
 	// We did an increase last time; how did it work out?
 	} else if(last_change == INCREASE) {
@@ -97,18 +99,15 @@ bool Twiddler::twiddle(double error) {
 		// If it succeeded, accelerate.
 		if(error < best_error) {
 			cout << "Increase succeeded!" << endl;
-			best_error = error;
-			diff_parameters[i_param] *= 1.1;
-
-			// Move on.
-			i_param++;
-			new_change = NONE;
+			succeed(error);
 
 		// If it failed, try a decrease.
 		} else {
-			cout << "Try a decrease." << endl;
+			cout << "Increase failed!" << endl;
+			cout << endl << "Try decreasing p[" << i_param << "]." << endl;
 			parameters[i_param] -= 2 * diff_parameters[i_param];
-			new_change = DECREASE;
+			printvec(parameters, "p");
+			last_change = DECREASE;
 		}
 
 	// We did a decrease last time; how did it work out?
@@ -117,23 +116,43 @@ bool Twiddler::twiddle(double error) {
 		// If it succeeded, accelerate.
 		if(error < best_error) {
 			cout << "Decrease succeeded!" << endl;
-			best_error = error;
-			diff_parameters[i_param] *= 1.1;
+			succeed(error);
 
 		} else {
 			// If the decrease also failed, restore the original parameter value and decelerate.
 			cout << "Decrease failed!" << endl;
 			parameters[i_param] += diff_parameters[i_param];
-			diff_parameters[i_param] *= 0.9;
+			printvec(parameters, "p");
+			fail();
 		}
-
-		// Regardless, we're moving on.
-		i_param++;
-		new_change = NONE;
 	}
 
-	last_change = new_change;
 	return false;
+}
+
+void Twiddler::succeed(double error) {
+	cout << "Recording new best error of " << error;
+	cout << " and increasing dp[" << i_param << "]." << endl;
+	diff_parameters[i_param] *= 1.1;
+	printvec(diff_parameters, "dp");
+	best_error = error;
+	cout << "Best error decreased to " << best_error << "." << endl;
+	moveOn();
+}
+
+void Twiddler::fail() {
+	cout << endl << "Failed twiddle." << endl;
+	cout << "Decreasing dp[" << i_param << "]" << endl;
+	diff_parameters[i_param] *= 0.9;
+	printvec(diff_parameters, "dp");
+	moveOn();
+}
+
+void Twiddler::moveOn() {
+	// Move on to next parameter.
+	cout << "Moving on from parameter " << i_param << "." << endl;
+	i_param++;
+	last_change = NONE;
 }
 
 
@@ -158,8 +177,12 @@ void Twiddler::set_diff_params(vector<double> new_diff_parameters) {
 	printvec(diff_parameters, "dp");
 }
 
+bool Twiddler::is_converged() {
+	return declared_convergence;
+}
 
-TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, int tmax) {
+
+TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, int tmax, double tol) {
 	this->pids = pids;
 	// for(auto &pid : pids) {
 	// 	this->pids.push_back(pid);
@@ -168,7 +191,7 @@ TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, int tmax) {
 
 	int nparams = pids.size() * 3;
 
-	twiddler = Twiddler(nparams);
+	twiddler = Twiddler(nparams, tol);
 
 	// Extract the existing parameters.
 	vector<double> new_parameters(nparams);
@@ -204,7 +227,8 @@ void TwiddlerManager::process_error(double error) {
 
 		integrated_error /= errors_seen;
 
-		cout << "Mean absolute error on run: " << integrated_error << endl;
+		if(!twiddler.is_converged())
+			cout << "Mean absolute error on run: " << integrated_error << endl;
 
 		// Then twiddle the parameters.
 		twiddler.twiddle(integrated_error);

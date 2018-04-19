@@ -6,9 +6,13 @@
 #include <cmath>
 #include <algorithm>  // std::min, std::max
 
-#define TARGETSPEED 12.0
+
+// Set parameters.
+#define TARGETSPEED 24.0
 #define CREEPSPEED 3.0
 #define MAXANGLE 25.0
+#define NSAMPLES 512
+#define TWIDDLETOL 0.0001
 
 // for convenience
 using json = nlohmann::json;
@@ -43,7 +47,7 @@ int main() {
     PID pid_steering;
     PID pid_throttle;
 
-    // TODO: Need to tune these.
+    // Need to tune these.
     // .13 .0002274 3.3
     // [0.24, 0.000468, 2, ]
     pid_steering.Init(.2, .0006, 2);
@@ -52,11 +56,8 @@ int main() {
     std::vector<PID*> pids = {&pid_steering};//, &pid_throttle};
 
     // Time-average the CTE to get an error value for Twiddle.
-    // nsamples = 4 is far too small, but it produces the segfault quickly.
-    int nsamples = 4;
-    TwiddlerManager twiddler_manager(pids, nsamples);
-
-
+    int nsamples = NSAMPLES;
+    TwiddlerManager twiddler_manager(pids, nsamples, TWIDDLETOL);
 
     h.onMessage([&pid_steering, &pid_throttle, &twiddler_manager](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
         // "42" at the start of the message means there's a websocket message event.
@@ -90,7 +91,7 @@ int main() {
                     * another PID controller to control the speed!
                     */
                     double steer_value = std::max(-1.0, std::min(1.0, pid_steering.TotalError()));
-                    double throttle = pid_throttle.TotalError();
+                    double throttle = std::max(pid_throttle.TotalError(), 0.0);
 
                     // DEBUG
                     // std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
