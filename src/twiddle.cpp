@@ -7,21 +7,7 @@ using namespace std;
 constexpr double DEFAULT_DIFF_PARAMS = 0.01;
 
 
-template <typename T>
-void printvec(vector<T> v) {
-	cout << "[";
-	for(auto & x : v) {
-		cout << x << ", ";
-	}
-	cout << "]";
-}
 
-template <typename T>
-void printvec(vector<T> v, string name) {
-	cout << name << " = ";
-	printvec(v);
-	cout << endl;
-}
 
 
 Twiddler::Twiddler(int nparams=6, double tol=0.0001) {
@@ -29,8 +15,8 @@ Twiddler::Twiddler(int nparams=6, double tol=0.0001) {
 	vector<double> diff_parameters(nparams, DEFAULT_DIFF_PARAMS);
 
 	cout << "Initialized Twiddler with" << endl;
-	printvec(parameters, "p");
-	printvec(diff_parameters, "dp");
+	vec_print(parameters, "p");
+	vec_print(diff_parameters, "dp");
 
 	i_param = 0;
 	iterations = 0;
@@ -44,9 +30,6 @@ Twiddler::Twiddler(int nparams=6, double tol=0.0001) {
 
 bool Twiddler::twiddle(double error) {
 
-	// Save the error history.
-	errors.push_back(error);
-
 	// If we previously declared convergence, just exit.
 	if(declared_convergence)
 		return true;
@@ -58,7 +41,7 @@ bool Twiddler::twiddle(double error) {
 		iterations++;
 
 		cout << endl << "=====================" << endl;
-		cout << "Twiddle iteration " << iterations << ":" << endl;
+		cout << "Twiddle iteration " << iterations << endl;
 
 		// Sum the increment vector.
 		double sdp = 0;
@@ -88,25 +71,26 @@ bool Twiddler::twiddle(double error) {
 	// We haven't tried this dp yet.
 	// Try an increase.
 	if(last_change == NONE) {
-		cout << endl << "Try increasing p[" << i_param << "]." << endl;
+		cout << endl << "------------i=" << i_param << "------------" << endl;
+		cout << "Try increasing p[" << i_param << "]." << endl;
 		parameters[i_param] += diff_parameters[i_param];
-		printvec(parameters, "p");
+		vec_print(parameters, "p");
 		last_change = INCREASE;
 
 	// We did an increase last time; how did it work out?
 	} else if(last_change == INCREASE) {
 
 		// If it succeeded, accelerate.
-		if(error < best_error) {
-			cout << "Increase succeeded!" << endl;
+		if(check_error(error)) {
+			cout << "; increase succeeded!" << endl;
 			succeed(error);
 
 		// If it failed, try a decrease.
 		} else {
-			cout << "Increase failed!" << endl;
+			cout << "; increase failed!" << endl;
 			cout << endl << "Try decreasing p[" << i_param << "]." << endl;
 			parameters[i_param] -= 2 * diff_parameters[i_param];
-			printvec(parameters, "p");
+			vec_print(parameters, "p");
 			last_change = DECREASE;
 		}
 
@@ -114,45 +98,60 @@ bool Twiddler::twiddle(double error) {
 	} else if(last_change == DECREASE) {
 		
 		// If it succeeded, accelerate.
-		if(error < best_error) {
-			cout << "Decrease succeeded!" << endl;
+		if(check_error(error)) {
+			cout << "; decrease succeeded!" << endl;
 			succeed(error);
 
 		} else {
 			// If the decrease also failed, restore the original parameter value and decelerate.
-			cout << "Decrease failed!" << endl;
+			cout << "; decrease failed!" << endl;
 			parameters[i_param] += diff_parameters[i_param];
-			printvec(parameters, "p");
-			fail();
+			vec_print(parameters, "p");
+			fail(error);
 		}
 	}
 
 	return false;
 }
 
+bool Twiddler::check_error(double error) {
+	bool result = error < best_error;
+	cout << "err=" << error;
+	if(result) {
+		cout << " < ";
+	} else {
+		cout << " >= ";
+	}
+	cout << "best=" << best_error;
+	return result;
+}
+
 void Twiddler::succeed(double error) {
 	cout << "Recording new best error of " << error;
 	cout << " and increasing dp[" << i_param << "]." << endl;
 	diff_parameters[i_param] *= 1.1;
-	printvec(diff_parameters, "dp");
+	vec_print(diff_parameters, "dp");
 	best_error = error;
 	cout << "Best error decreased to " << best_error << "." << endl;
-	moveOn();
+	moveOn(error);
 }
 
-void Twiddler::fail() {
+void Twiddler::fail(double error) {
 	cout << endl << "Failed twiddle." << endl;
 	cout << "Decreasing dp[" << i_param << "]" << endl;
 	diff_parameters[i_param] *= 0.9;
-	printvec(diff_parameters, "dp");
-	moveOn();
+	vec_print(diff_parameters, "dp");
+	moveOn(error);
 }
 
-void Twiddler::moveOn() {
+void Twiddler::moveOn(double error) {
 	// Move on to next parameter.
 	cout << "Moving on from parameter " << i_param << "." << endl;
 	i_param++;
 	last_change = NONE;
+
+	// Move directly on to the next parameter manipulation.
+	twiddle(error);
 }
 
 
@@ -162,19 +161,19 @@ std::vector<double> Twiddler::get_params() {
 
 void Twiddler::set_params(vector<double> new_parameters) {
 	cout << "Changed p from" << endl;
-	printvec(parameters, "p");
+	vec_print(parameters, "p");
 	parameters = new_parameters;
 	cout << "to" << endl;
-	printvec(parameters, "p");
+	vec_print(parameters, "p");
 }
 
 
 void Twiddler::set_diff_params(vector<double> new_diff_parameters) {
 	cout << "Changed dp from" << endl;
-	printvec(diff_parameters, "dp");
+	vec_print(diff_parameters, "dp");
 	diff_parameters = new_diff_parameters;
 	cout << "to" << endl;
-	printvec(diff_parameters, "dp");
+	vec_print(diff_parameters, "dp");
 }
 
 bool Twiddler::is_converged() {
@@ -182,12 +181,12 @@ bool Twiddler::is_converged() {
 }
 
 
-TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, int tmax, double tol) {
+TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, double tol) {
 	this->pids = pids;
-	// for(auto &pid : pids) {
-	// 	this->pids.push_back(pid);
-	// }
 	this->tmax = tmax;
+
+	lambda_mean = 1.0;
+	lambda_stdd = 1.0;
 
 	int nparams = pids.size() * 3;
 
@@ -210,28 +209,36 @@ TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, int tmax, double tol) 
 	}
 	twiddler.set_params(new_parameters);
 	twiddler.set_diff_params(new_diff_parameters);
-
-	errors_seen = 0;
-	integrated_error = 0;
 }
 
 void TwiddlerManager::process_error(double error) {
 
-	// Integrate the error.
-	integrated_error += error;
-	errors_seen++;
+	// Save the error history.
+	errors.push_back(error);
+	absolute_errors.push_back(fabs(error));
 
 	// If we've added up enough errors, take a mean.
-	if(errors_seen >= tmax) {
-		// cout << endl;
+	if(absolute_errors.size() >= tmax) {
 
-		integrated_error /= errors_seen;
+		double mae = vec_mean(absolute_errors);
+		double sae = vec_stdd(absolute_errors, mae);
 
-		if(!twiddler.is_converged())
-			cout << "Mean absolute error on run: " << integrated_error << endl;
+		double me  = vec_mean(errors);
+		double se  = vec_stdd(errors, me);
+
+		double objective = lambda_mean * mae + lambda_stdd * se;
+
+		if(!twiddler.is_converged()) {
+			cout << "Run stats:" << endl;
+			cout << "   >Mean absolute error = " << mae << endl;
+			cout << "    Stdd absolute error = " << sae << endl;
+			cout << "    Mean error          = " << me << endl;
+			cout << "   >Stdd error          = " << se << endl;
+			cout << "   ==> objective = " << objective << endl;
+		}
 
 		// Then twiddle the parameters.
-		twiddler.twiddle(integrated_error);
+		twiddler.twiddle(objective);
 
 		// Apply the new parameters to the PIDs.
 		int i = 0;
@@ -241,10 +248,9 @@ void TwiddlerManager::process_error(double error) {
 			i++;
 		}
 
-		// Reset the count.
-		integrated_error = 0;
-		errors_seen = 0;
-	// } else {
-	// 	cout << integrated_error << " ";
+		// Clear the run.
+		absolute_errors.clear();
+		errors.clear();
+
 	}
 }

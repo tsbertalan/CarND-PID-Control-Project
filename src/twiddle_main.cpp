@@ -8,10 +8,10 @@
 
 
 // Set parameters.
-#define TARGETSPEED 24.0
+#define TARGETSPEED 48.0
 #define CREEPSPEED 3.0
 #define MAXANGLE 25.0
-#define NSAMPLES 512
+#define NSAMPLES 128
 #define TWIDDLETOL 0.0001
 
 // for convenience
@@ -50,7 +50,7 @@ int main() {
     // Need to tune these.
     // .13 .0002274 3.3
     // [0.24, 0.000468, 2, ]
-    pid_steering.Init(.2, .0006, 2);
+    pid_steering.Init(0.25409, 0.000654, 1.95139);
     pid_throttle.Init(0.3, 0, 0.02);
     
     std::vector<PID*> pids = {&pid_steering};//, &pid_throttle};
@@ -103,7 +103,7 @@ int main() {
                     // std::cout << msg << std::endl;
                     ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 
-                    twiddler_manager.process_error(fabs(cte));
+                    twiddler_manager.process_error(cte);
                 }
             } else {
                 // Manual driving

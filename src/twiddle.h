@@ -4,6 +4,7 @@
 #include <vector>
 #include <limits>
 #include "PID.h"
+#include "vector_utils.h"
 
 enum last_change_enum { INCREASE, DECREASE, NONE };
 typedef enum last_change_enum last_change_t;
@@ -14,7 +15,6 @@ class Twiddler {
 private:
   std::vector<double> parameters;
   std::vector<double> diff_parameters;
-  std::vector<double> errors;
 
   unsigned int i_param;
   int iterations;
@@ -24,9 +24,11 @@ private:
 
   bool declared_convergence;
 
-  void moveOn();
+  void moveOn(double error);
   void succeed(double error);
-  void fail();
+  void fail(double error);
+
+  bool check_error(double error);
 
 public:
   Twiddler(int nparams, double tol);
@@ -43,12 +45,15 @@ private:
   std::vector<PID*> pids;
   Twiddler twiddler;
   
-  double integrated_error;
-  int errors_seen;
-  int tmax;
+  std::vector<double> absolute_errors;
+  std::vector<double> errors;
+
+  unsigned int tmax;
 
 public:
-  TwiddlerManager(std::vector<PID*>& pids, int tmax, double tol);
+  double lambda_mean;
+  double lambda_stdd;
+  TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, double tol);
   void process_error(double error);
 
 };
