@@ -1,3 +1,3 @@
 #!/bin/bash
-cd build && ./twiddle
+cd build && ./twiddle | tee "twiddle_`date`.out"
 
