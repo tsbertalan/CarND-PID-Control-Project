@@ -117,6 +117,7 @@ bool Twiddler::twiddle(double error) {
 	return false;
 }
 
+
 bool Twiddler::check_error(double error) {
 	bool result = error < best_error;
 	cout << "err=" << error;
@@ -129,6 +130,7 @@ bool Twiddler::check_error(double error) {
 	return result;
 }
 
+
 void Twiddler::succeed(double error) {
 	say_time(); cout << "Recording new best error of " << error;
 	cout << " and increasing dp[" << i_param << "]." << endl;
@@ -139,6 +141,7 @@ void Twiddler::succeed(double error) {
 	moveOn(error);
 }
 
+
 void Twiddler::fail(double error) {
 	cout << endl; say_time(); cout << "Failed twiddle." << endl;
 	say_time(); cout << "Decreasing dp[" << i_param << "]" << endl;
@@ -146,6 +149,7 @@ void Twiddler::fail(double error) {
 	say_time(); vec_print(diff_parameters, "dp");
 	moveOn(error);
 }
+
 
 void Twiddler::moveOn(double error) {
 	// Move on to next parameter.
@@ -161,6 +165,7 @@ void Twiddler::moveOn(double error) {
 std::vector<double> Twiddler::get_params() {
 	return parameters;
 }
+
 
 void Twiddler::set_params(vector<double> new_parameters) {
 	cout << "Changed p from" << endl;
@@ -179,6 +184,7 @@ void Twiddler::set_diff_params(vector<double> new_diff_parameters) {
 	vec_print(diff_parameters, "dp");
 }
 
+
 bool Twiddler::is_converged() {
 	return declared_convergence;
 }
@@ -192,7 +198,7 @@ TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, dou
 	num_discarded = 0;
 
 	lambda_mean = 1.0;
-	lambda_stdd = 1.0;
+	lambda_stdd = 4.0;
 
 	int nparams = pids.size() * 3;
 
@@ -207,15 +213,16 @@ TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, dou
 		new_parameters[i*3+1] = pid->Ki;
 		new_parameters[i*3+2] = pid->Kd;
 
-		new_diff_parameters[i*3+0] = 5e-2;
-		new_diff_parameters[i*3+1] = 1e-4;
-		new_diff_parameters[i*3+2] = 5e-2;
+		new_diff_parameters[i*3+0] = 1e-2;
+		new_diff_parameters[i*3+1] = 1e-3;
+		new_diff_parameters[i*3+2] = 1e-2;
 		
 		i++;
 	}
 	twiddler.set_params(new_parameters);
 	twiddler.set_diff_params(new_diff_parameters);
 }
+
 
 void TwiddlerManager::process_error(double error) {
 

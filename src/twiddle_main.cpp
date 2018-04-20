@@ -12,11 +12,11 @@
 
 
 // Set parameters.
-#define TARGETSPEED 20.0
+#define TARGETSPEED 40.0
 #define CREEPSPEED 3.0
 #define MAXANGLE 25.0
-#define NSAMPLES 256
-#define NDISCARD 32
+#define NSAMPLES 2000
+#define NDISCARD 128
 #define TWIDDLETOL 0.0001
 
 // for convenience
@@ -53,10 +53,13 @@ int main() {
     PID pid_throttle;
 
     // Need to tune these.
-    // .13 .0002274 3.3
-    // [0.24, 0.000468, 2, ]
-    pid_steering.Init(0.25409, 0.000654, 1.95139);
-    // pid_steering.Init(0.3, 0.0007, .1);
+
+    // Pretty good values:
+    //pid_steering.Init(0.25409, 0.000654, 1.95139);
+
+    // Bad values for twiddling:
+    pid_steering.Init(8e-2, 1e-2, 4e0);
+
     pid_throttle.Init(0.3, 0, 0.02);
     
     std::vector<PID*> pids = {&pid_steering};//, &pid_throttle};
