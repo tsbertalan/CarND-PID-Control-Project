@@ -28,13 +28,6 @@ Twiddler::Twiddler(int nparams=6, double tol=0.0001) {
 	declared_convergence = false;
 }
 
-void say_time() {
-	using namespace std::chrono;
-	long ms = duration_cast<milliseconds> (
-		system_clock::now().time_since_epoch()
-	).count();
-	cout << ms << " | ";
-}
 
 bool Twiddler::twiddle(double error) {
 

@@ -5,6 +5,7 @@
 #include <limits>
 #include "PID.h"
 #include "vector_utils.h"
+#include "say_time.h"
 
 enum last_change_enum { INCREASE, DECREASE, NONE };
 typedef enum last_change_enum last_change_t;

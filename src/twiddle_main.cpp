@@ -1,10 +1,14 @@
-#include <uWS/uWS.h>
 #include <iostream>
-#include "json.hpp"
-#include "PID.h"
-#include "twiddle.h"
 #include <cmath>
 #include <algorithm>  // std::min, std::max
+#include <fstream> // std::ofstream
+#include "json.hpp"
+
+#include <uWS/uWS.h>
+#include "PID.h"
+
+#include "twiddle.h"
+#include "say_time.h"
 
 
 // Set parameters.
@@ -61,7 +65,10 @@ int main() {
     int nsamples = NSAMPLES;
     TwiddlerManager twiddler_manager(pids, nsamples, TWIDDLETOL, NDISCARD);
 
-    h.onMessage([&pid_steering, &pid_throttle, &twiddler_manager](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+    std::ofstream cte_log_file;
+    cte_log_file.open("cte.csv", std::ios::trunc);
+
+    h.onMessage([&pid_steering, &pid_throttle, &twiddler_manager, &cte_log_file](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
         // "42" at the start of the message means there's a websocket message event.
         // The 4 signifies a websocket message
         // The 2 signifies a websocket event
@@ -75,6 +82,8 @@ int main() {
                     double cte = std::stod(j[1]["cte"].get<std::string>());
                     double speed = std::stod(j[1]["speed"].get<std::string>());
                     double angle = std::stod(j[1]["steering_angle"].get<std::string>());
+
+                    cte_log_file << epoch_time()<<", " << cte<<"," << speed<<"," <<angle<< std::endl;
 
                     // std::cout << "Current angle/speed is " << angle << "/" << speed << std::endl;
 

@@ -2,23 +2,28 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sys import argv
 
-def line(l):
-    if '|' in l:
-        l = l.split('|')
-        assert len(l) == 2
-        return long(l[0]), l[1].strip()
-    else:
-        return None, l
 
 nparam = 3
+
 
 if len(argv) == 1:
     fname = 'twiddle.out'
 else:
     fname = argv[1]
 
+# Read twiddle log.
 with open(fname, 'r') as f:
     lines = f.readlines()
+
+# Read CTE log.
+cte_history = []
+cte_history_times = []
+with open('../build/cte.csv', 'r') as ctefile:
+    for line in ctefile.readlines():
+        t, cte, speed, angle = line.split(',')
+        cte_history.append(float(cte))
+        cte_history_times.append(int(t))
+
 
 parameter_history = []
 parameter_history_times = []
@@ -37,8 +42,18 @@ obj_history_times = []
 
 cycle_start_times = []
 
+
+def parse_time_from_line(l):
+    if '|' in l:
+        l = l.split('|')
+        assert len(l) == 2
+        return long(l[0]), l[1].strip()
+    else:
+        return None, l
+
+
 for l in lines:
-    t_clock, l = line(l)
+    t_clock, l = parse_time_from_line(l)
 
     if t_clock is None:
         continue
@@ -80,10 +95,14 @@ for l in lines:
         i_attempt = 0
         i_param = int(l.replace('-', '').replace('i=', ''))
 
-diff_parameter_history = np.array(diff_parameter_history)
-parameter_history = np.array(parameter_history)
-
 ar = lambda v: np.array(v).astype(float)
+
+parameter_history = ar(parameter_history)
+diff_parameter_history = ar(diff_parameter_history)
+obj_history = ar(obj_history)
+mae_history = ar(mae_history)
+std_history = ar(std_history)
+cte_history = ar(cte_history)
 
 parameter_history_times = ar(parameter_history_times)
 diff_parameter_history_times = ar(diff_parameter_history_times)
@@ -91,10 +110,12 @@ obj_history_times = ar(obj_history_times)
 mae_history_times = ar(mae_history_times)
 std_history_times = ar(std_history_times)
 cycle_start_times = ar(cycle_start_times)
+cte_history_times = ar(cte_history_times)
 
 Ts = (
     parameter_history_times, diff_parameter_history_times, 
-    obj_history_times, mae_history_times, std_history_times, cycle_start_times
+    obj_history_times, mae_history_times, std_history_times, cycle_start_times,
+    cte_history_times
 )
 t0 = min([a.min() for a in Ts])
 for a in Ts:
@@ -103,10 +124,13 @@ for a in Ts:
     a[:] /= 1000 * 60
 
 fig, ax = plt.subplots()
-ax.plot(mae_history_times, mae_history, color='black', label='MAE$(t)$')
+ax.plot(mae_history_times, mae_history, color='black', label='MAE$(t)$', linewidth=3)
 ax.plot(std_history_times, std_history, color='magenta', label='STD$(t)$')
 ax.plot(obj_history_times, obj_history, 
     color='blue', linewidth=2, linestyle='-', label='objective$(t)$')
+ax.plot(cte_history_times, cte_history,
+        color='black', alpha=.5, linestyle='-', label='raw cte$(t)$')
+
 mobj = min(obj_history)
 ax.axhline(mobj, label='min obj $=%.5f$' % mobj, 
     linewidth=3, linestyle='--', color='green')
