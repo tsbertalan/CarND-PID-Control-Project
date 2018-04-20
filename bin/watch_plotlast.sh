@@ -9,7 +9,7 @@ do
     last="`ls -t ../build/twiddle_* | head -n 1`" 
     python plot.py "$last" &
     child_pid=$!
-    sleep 3
+    sleep 4
     echo "Opened $last with PID $child_pid."
 
     # Maximize.

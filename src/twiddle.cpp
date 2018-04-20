@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include <chrono>
+#include <algorithm> //  min, max
 
 using namespace std;
 
@@ -213,9 +214,11 @@ TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, dou
 		new_parameters[i*3+1] = pid->Ki;
 		new_parameters[i*3+2] = pid->Kd;
 
-		new_diff_parameters[i*3+0] = 1e-2;
-		new_diff_parameters[i*3+1] = 1e-3;
-		new_diff_parameters[i*3+2] = 1e-2;
+		// At most, allow the first step to be to zero,
+        // not negative!
+		new_diff_parameters[i*3+0] = min(1e-2, pid->Kp);
+		new_diff_parameters[i*3+1] = min(1e-4, pid->Ki);
+		new_diff_parameters[i*3+2] = min(1e-2, pid->Kd);
 		
 		i++;
 	}

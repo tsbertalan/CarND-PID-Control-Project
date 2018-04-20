@@ -1,7 +1,13 @@
 #ifndef PID_H
 #define PID_H
 
+#include <deque>
+
+
 class PID {
+private:
+  std::deque<double> cte_history;
+
 public:
   /*
   * Errors

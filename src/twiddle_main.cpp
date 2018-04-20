@@ -12,12 +12,12 @@
 
 
 // Set parameters.
-#define TARGETSPEED 40.0
+#define TARGETSPEED 30.0
 #define CREEPSPEED 3.0
 #define MAXANGLE 25.0
-#define NSAMPLES 2000
-#define NDISCARD 128
-#define TWIDDLETOL 0.0001
+#define NSAMPLES 800
+#define NDISCARD 32
+#define TWIDDLETOL 0.001
 
 // for convenience
 using json = nlohmann::json;
@@ -52,13 +52,13 @@ int main() {
     PID pid_steering;
     PID pid_throttle;
 
-    // Need to tune these.
+    // Need to tune PID parameters.
 
     // Pretty good values:
     //pid_steering.Init(0.25409, 0.000654, 1.95139);
 
-    // Bad values for twiddling:
-    pid_steering.Init(8e-2, 1e-2, 4e0);
+    // Bad initial values for twiddling:
+    pid_steering.Init(8e-2, 1e-4, 5e-1);
 
     pid_throttle.Init(0.3, 0, 0.02);
     
@@ -86,17 +86,13 @@ int main() {
                     double speed = std::stod(j[1]["speed"].get<std::string>());
                     double angle = std::stod(j[1]["steering_angle"].get<std::string>());
 
-                    cte_log_file << epoch_time()<<", " << cte<<"," << speed<<"," <<angle<< std::endl;
-
-                    // std::cout << "Current angle/speed is " << angle << "/" << speed << std::endl;
 
                     pid_steering.UpdateError(cte);
 
-                    double speedTarget = TARGETSPEED * (1 - fabs(angle/MAXANGLE) - .5*fabs(cte));
-                    // std::cout << "Speed target is " << speedTarget;
+                    double speedTarget = TARGETSPEED;// * (1 - fabs(angle/MAXANGLE) - .5*fabs(cte));
                     speedTarget = std::max(CREEPSPEED, speedTarget);
-                    // std::cout << " --> " << speedTarget << std::endl;
                     pid_throttle.UpdateError(speed - speedTarget);
+
 
                     /*
                     * TODO: Calcuate steering value here, remember the steering value is
@@ -107,8 +103,9 @@ int main() {
                     double steer_value = std::max(-1.0, std::min(1.0, pid_steering.TotalError()));
                     double throttle = std::max(pid_throttle.TotalError(), 0.0);
 
-                    // DEBUG
-                    // std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
+                    // Save to log file.
+                    cte_log_file <<epoch_time()<<", " <<cte<<","   <<speed<<"," <<angle<<",";
+                    cte_log_file <<steer_value<<","   <<throttle<< std::endl;
 
                     json msgJson;
                     msgJson["steering_angle"] = steer_value;

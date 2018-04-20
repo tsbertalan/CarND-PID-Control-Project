@@ -1,6 +1,8 @@
 #include <iostream>
 #include "PID.h"
 
+#define MAX_CTE_HISTORY_LENGTH 200
+
 using namespace std;
 
 /*
@@ -22,13 +24,19 @@ void PID::Init(double Kp, double Ki, double Kd) {
 }
 
 void PID::UpdateError(double cte) {
+    cte_history.push_back(cte);
     d_error = cte - p_error;
     p_error = cte;
     i_error += cte;
 
+    if(cte_history.size() >= MAX_CTE_HISTORY_LENGTH) {
+        i_error -= cte_history[0];
+        cte_history.pop_front();
+    }
+
 }
 
 double PID::TotalError() {
-    return -Kp * p_error - Ki * i_error - Kd * d_error;
+    return - Kp * p_error - Ki * i_error - Kd * d_error;
 }
 
