@@ -1,5 +1,5 @@
 #!/bin/bash
-DELAY=16
+DELAY=32
 while true
 do
     # Get the former active window id.
@@ -9,7 +9,7 @@ do
     last="`ls -t ../build/twiddle_* | head -n 1`" 
     python plot.py "$last" &
     child_pid=$!
-    sleep 4
+    sleep 5
     echo "Opened $last with PID $child_pid."
 
     # Maximize.

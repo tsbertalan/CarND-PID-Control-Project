@@ -15,7 +15,7 @@
 #define TARGETSPEED 30.0
 #define CREEPSPEED 3.0
 #define MAXANGLE 25.0
-#define NSAMPLES 800
+#define NSAMPLES 4000
 #define NDISCARD 32
 #define TWIDDLETOL 0.001
 

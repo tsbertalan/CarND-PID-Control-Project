@@ -28,7 +28,7 @@ steer_history = []
 throttle_history = []
 t0_cte = None
 # Discard the first fraction of a minute of telemetry.
-cte_discard = 0.04 * 1000 * 60
+cte_discard = 0.08 * 1000 * 60
 with open('../build/cte.csv', 'r') as ctefile:
     for line in ctefile.readlines():
         t, cte, speed, angle, steer, throttle = line.split(',')
