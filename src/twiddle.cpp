@@ -135,7 +135,7 @@ bool Twiddler::check_error(double error) {
 void Twiddler::succeed(double error) {
 	say_time(); cout << "Recording new best error of " << error;
 	cout << " and increasing dp[" << i_param << "]." << endl;
-	diff_parameters[i_param] *= 1.1;
+	diff_parameters[i_param] *= 1.5;
 	say_time(); vec_print(diff_parameters, "dp");
 	best_error = error;
 	say_time(); cout << "Best error decreased to " << best_error << "." << endl;
@@ -146,7 +146,7 @@ void Twiddler::succeed(double error) {
 void Twiddler::fail(double error) {
 	cout << endl; say_time(); cout << "Failed twiddle." << endl;
 	say_time(); cout << "Decreasing dp[" << i_param << "]" << endl;
-	diff_parameters[i_param] *= 0.9;
+	diff_parameters[i_param] /= 1.5;
 	say_time(); vec_print(diff_parameters, "dp");
 	moveOn(error);
 }
