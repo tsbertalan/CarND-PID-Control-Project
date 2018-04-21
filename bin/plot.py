@@ -28,7 +28,7 @@ steer_history = []
 throttle_history = []
 t0_cte = None
 # Discard the first fraction of a minute of telemetry.
-cte_discard = 0.14 * 1000 * 60
+cte_discard = 0.06 * 1000 * 60
 with open('../build/cte.csv', 'r') as ctefile:
     for line in ctefile.readlines():
         t, cte, speed, angle, steer, throttle = line.split(',')
@@ -182,6 +182,15 @@ for a in Ts:
 fig, ax = plt.subplots(figsize=(24,12))
 ax2 = ax.twinx()
 ax.axhline(0, color='black', alpha=.25, linestyle=':')
+
+try:
+    if len(accepted_parameter_history) == 0:
+        p = parameter_history
+    else:
+        p = accepted_parameter_history
+    fig.suptitle('Final parameters: $K_p=%.2g$, $K_i=%.2g$, $K_d=%.2g$' % tuple(p[-1, :3]))
+except IndexError:
+    pass
 
 ax2.plot(mae_history_times, mae_history, 
     color='blue', label='MAE$(t)$', linewidth=1, linestyle='--')

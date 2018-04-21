@@ -15,7 +15,7 @@
 #define TARGETSPEED 30.0
 #define CREEPSPEED 3.0
 #define MAXANGLE 25.0
-#define NSAMPLES 400
+#define NSAMPLES 1600
 #define NDISCARD 32
 #define TWIDDLETOL 0.001
 
@@ -54,19 +54,37 @@ int main() {
 
     // Need to tune PID parameters.
 
-    // Pretty good values:
-    // From a few twiddle runs:
-//    pid_steering.Init(0.25409, 0.000654, 1.95139);
-//    pid_steering.Init(0.117037, 0.000174074, 0.494455)
-
     // Manually chosen:
-    pid_steering.Init(0.2, 0.002, 4);
+    // pid_steering.Init(0.2, 0.001, 4);
 
     // Bad initial values for twiddling:
-//    pid_steering.Init(8e-2, 1e-4, 5e-1);
+    // pid_steering.Init(8e-2, 1e-4, 5e-1);
+
+    // Pretty good values:
+    // From a few twiddle runs:
+    // pid_steering.Init(0.25409, 0.000654, 1.95139);
+    // pid_steering.Init(0.117037, 0.000174074, 0.494455)
+    // pid_steering.Init(0.320324, 0.00199993, 4.00688);
+
+    // For Ziegler-Nichols:
+    // pid_steering.Init(.1, 0, 0);
+    // Gives: Kc = .05; Tc* = 1635 [ms]; Tc=Tc*/per_PID
+    // Therefore, using Kp=0.6*Kc; Ki=2./Tc; Kd=8./Tc
+    // Where per_PID=49 [ms] is the PID sampling period, I get
+    // pid_steering.Init(.03, .059939, 4.1709);
+    // This is reasonable for the Kd term, but not for the other two.
+    // Without being able to make a step change, it's hard to judge the critical Kp value "Kc" for ZN.
+    // So, while the Ki and Kd values are decent, the value of .03 that it gives for Kp is poor.
+    // Ki and Kd come from period estimates, which I just took from the many recordings
+    // of undamped oscillation I have. Kp, I chose manually as 0.2.
+    // The Ki value is just too large--I'm not sure why.
+    // Finally, after examining the PV(t), CV(t) recordings, I guessed that the large Kd value
+    // was causing some of the overreacting to small disturbances, and so reduced it from the ZN prediction.
+    // Basically, I took very little from ZN.
+    pid_steering.Init(.15, .005, 3);
 
     pid_throttle.Init(0.3, 0, 0.02);
-    
+
     std::vector<PID*> pids = {&pid_steering};//, &pid_throttle};
 
     // Time-average the CTE to get an error value for Twiddle.

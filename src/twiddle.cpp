@@ -216,9 +216,9 @@ TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, dou
 
 		// At most, allow the first step to be to zero,
         // not negative!
-		new_diff_parameters[i*3+0] = min(1e-2, pid->Kp);
-		new_diff_parameters[i*3+1] = min(1e-4, pid->Ki);
-		new_diff_parameters[i*3+2] = min(1e-2, pid->Kd);
+		new_diff_parameters[i*3+0] = min(0.01, pid->Kp);
+		new_diff_parameters[i*3+1] = min(0.001, pid->Ki);
+		new_diff_parameters[i*3+2] = min(0.1, pid->Kd);
 		
 		i++;
 	}
