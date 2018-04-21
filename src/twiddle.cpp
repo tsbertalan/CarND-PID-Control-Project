@@ -198,8 +198,8 @@ TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, dou
 
 	num_discarded = 0;
 
-	lambda_mean = 1.0;
-	lambda_stdd = 4.0;
+	lambda_mean = 2.0;
+	lambda_stdd = 1.0;
 
 	int nparams = pids.size() * 3;
 

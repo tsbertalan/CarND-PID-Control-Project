@@ -15,7 +15,7 @@
 #define TARGETSPEED 30.0
 #define CREEPSPEED 3.0
 #define MAXANGLE 25.0
-#define NSAMPLES 4000
+#define NSAMPLES 400
 #define NDISCARD 32
 #define TWIDDLETOL 0.001
 
@@ -55,10 +55,15 @@ int main() {
     // Need to tune PID parameters.
 
     // Pretty good values:
-    //pid_steering.Init(0.25409, 0.000654, 1.95139);
+    // From a few twiddle runs:
+//    pid_steering.Init(0.25409, 0.000654, 1.95139);
+//    pid_steering.Init(0.117037, 0.000174074, 0.494455)
+
+    // Manually chosen:
+    pid_steering.Init(0.2, 0.002, 4);
 
     // Bad initial values for twiddling:
-    pid_steering.Init(8e-2, 1e-4, 5e-1);
+//    pid_steering.Init(8e-2, 1e-4, 5e-1);
 
     pid_throttle.Init(0.3, 0, 0.02);
     

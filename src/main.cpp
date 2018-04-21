@@ -5,7 +5,7 @@
 #include <math.h>
 #include <algorithm>  // std::min, std::max
 
-#define TARGETSPEED 20.0
+#define TARGETSPEED 30.0
 #define CREEPSPEED 3.0
 #define MAXANGLE 25.0
 
@@ -40,7 +40,7 @@ int main() {
     PID pid_steering;
     PID pid_throttle;
     // TODO: Need to tune these.
-    pid_steering.Init(0.1, 0.0003, 3);
+    pid_steering.Init(0.2, 0.002, 4);
     pid_throttle.Init(0.3, 0, 0.02);
 
     h.onMessage([&pid_steering, &pid_throttle](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
@@ -58,14 +58,10 @@ int main() {
                     double speed = std::stod(j[1]["speed"].get<std::string>());
                     double angle = std::stod(j[1]["steering_angle"].get<std::string>());
 
-                    std::cout << "Current angle/speed is " << angle << "/" << speed << std::endl;
-
                     pid_steering.UpdateError(cte);
 
-                    double speedTarget = TARGETSPEED * (1 - fabs(angle/MAXANGLE) - .5*fabs(cte));
-                    std::cout << "Speed target is " << speedTarget;
+                    double speedTarget = TARGETSPEED;// * (1 - fabs(angle/MAXANGLE) - .5*fabs(cte));
                     speedTarget = std::max(CREEPSPEED, speedTarget);
-                    std::cout << " --> " << speedTarget << std::endl;
                     pid_throttle.UpdateError(speed - speedTarget);
 
                     /*
@@ -77,14 +73,10 @@ int main() {
                     double steer_value = std::max(-1.0, std::min(1.0, pid_steering.TotalError()));
                     double throttle = pid_throttle.TotalError();
 
-                    // DEBUG
-                    std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
-
                     json msgJson;
                     msgJson["steering_angle"] = steer_value;
                     msgJson["throttle"] = throttle;
                     auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-                    std::cout << msg << std::endl;
                     ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
                 }
             } else {
