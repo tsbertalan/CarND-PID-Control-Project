@@ -1,6 +1,8 @@
 #include <iostream>
 #include "PID.h"
 
+// 200 samples (About 49 [ms] each) is enough time to judge whether we're turning,
+// and so enough time to keep track of integrated history.
 #define MAX_CTE_HISTORY_LENGTH 200
 
 using namespace std;

@@ -26,12 +26,13 @@ cte_history = []
 cte_history_times = []
 steer_history = []
 throttle_history = []
+ierr_history = []
 t0_cte = None
 # Discard the first fraction of a minute of telemetry.
-cte_discard = 0.06 * 1000 * 60
+cte_discard = 0.1 * 1000 * 60
 with open('../build/cte.csv', 'r') as ctefile:
     for line in ctefile.readlines():
-        t, cte, speed, angle, steer, throttle = line.split(',')
+        t, cte, speed, angle, steer, throttle, ierr = line.split(',')
         t = int(t)
         if t0_cte is None:
             t0_cte = t
@@ -40,6 +41,7 @@ with open('../build/cte.csv', 'r') as ctefile:
             cte_history_times.append(t)
             steer_history.append(float(steer))
             throttle_history.append(float(throttle))
+            ierr_history.append(ierr)
 
 parameter_history = []
 parameter_history_times = []
@@ -127,11 +129,6 @@ ar = lambda v: np.array(v).astype(float)
 parameter_history = ar(parameter_history)
 accepted_parameter_history = ar(accepted_parameter_history)
 diff_parameter_history = ar(diff_parameter_history)
-# obj_history = ar(obj_history)
-# mae_history = ar(mae_history)
-# std_history = ar(std_history)
-# cte_history = ar(cte_history)
-# steer_history = ar(steer_history)
 
 parameter_history_times = ar(parameter_history_times)
 accepted_parameter_history_times = ar(accepted_parameter_history)
@@ -188,7 +185,7 @@ try:
         p = parameter_history
     else:
         p = accepted_parameter_history
-    fig.suptitle('Final parameters: $K_p=%.2g$, $K_i=%.2g$, $K_d=%.2g$' % tuple(p[-1, :3]))
+    fig.suptitle('Final parameters: $K_p=%.3g$, $K_i=%.3g$, $K_d=%.3g$' % tuple(p[-1, :3]))
 except IndexError:
     pass
 
@@ -205,6 +202,11 @@ ax.plot(cte_history_times, steer_history,
         color='red', alpha=.25, linestyle='-', label='steer$(t)$')
 ax.plot(cte_history_times, throttle_history,
         color='green', alpha=.25, linestyle='-', label='throttle$(t)$')
+
+div = 50
+ax.plot(cte_history_times, ar(ierr_history) / div,
+        color='indigo', alpha=.25, linestyle='--', label='$\int$ error $(t)$ $/%d$' % div)
+
 
 ax.grid(False)
 ax2.grid(False)

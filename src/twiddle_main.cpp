@@ -12,7 +12,7 @@
 
 
 // Set parameters.
-#define TARGETSPEED 30.0
+#define TARGETSPEED 40.0
 #define CREEPSPEED 3.0
 #define MAXANGLE 25.0
 #define NSAMPLES 1600
@@ -81,7 +81,7 @@ int main() {
     // Finally, after examining the PV(t), CV(t) recordings, I guessed that the large Kd value
     // was causing some of the overreacting to small disturbances, and so reduced it from the ZN prediction.
     // Basically, I took very little from ZN.
-    pid_steering.Init(.15, .005, 3);
+    pid_steering.Init(.11, .001, 2);
 
     pid_throttle.Init(0.3, 0, 0.02);
 
@@ -128,7 +128,7 @@ int main() {
 
                     // Save to log file.
                     cte_log_file <<epoch_time()<<", " <<cte<<","   <<speed<<"," <<angle<<",";
-                    cte_log_file <<steer_value<<","   <<throttle<< std::endl;
+                    cte_log_file <<steer_value<<","   <<throttle<<"," <<pid_steering.i_error<< std::endl;
 
                     json msgJson;
                     msgJson["steering_angle"] = steer_value;
