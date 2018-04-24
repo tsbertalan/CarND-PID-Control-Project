@@ -6,7 +6,6 @@
 #include <algorithm>  // std::min, std::max
 
 #define TARGETSPEED 30.0
-#define CREEPSPEED 3.0
 #define MAXANGLE 25.0
 
 // for convenience
@@ -39,7 +38,6 @@ int main() {
 
     PID pid_steering;
     PID pid_throttle;
-    // TODO: Need to tune these.
     pid_steering.Init(0.2, 0.002, 4);
     pid_throttle.Init(0.3, 0, 0.02);
 
@@ -56,16 +54,15 @@ int main() {
                     // j[1] is the data JSON object
                     double cte = std::stod(j[1]["cte"].get<std::string>());
                     double speed = std::stod(j[1]["speed"].get<std::string>());
-                    double angle = std::stod(j[1]["steering_angle"].get<std::string>());
+                    //double angle = std::stod(j[1]["steering_angle"].get<std::string>());
 
                     pid_steering.UpdateError(cte);
 
-                    double speedTarget = TARGETSPEED;// * (1 - fabs(angle/MAXANGLE) - .5*fabs(cte));
-                    speedTarget = std::max(CREEPSPEED, speedTarget);
+                    double speedTarget = TARGETSPEED;
                     pid_throttle.UpdateError(speed - speedTarget);
 
                     /*
-                    * TODO: Calcuate steering value here, remember the steering value is
+                    * Calcuate steering value here, remember the steering value is
                     * [-1, 1].
                     * NOTE: Feel free to play around with the throttle and speed. Maybe use
                     * another PID controller to control the speed!

@@ -112,13 +112,12 @@ int main() {
 
                     pid_steering.UpdateError(cte);
 
-                    double speedTarget = TARGETSPEED;// * (1 - fabs(angle/MAXANGLE) - .5*fabs(cte));
-                    speedTarget = std::max(CREEPSPEED, speedTarget);
+                    double speedTarget = TARGETSPEED;
                     pid_throttle.UpdateError(speed - speedTarget);
 
 
                     /*
-                    * TODO: Calcuate steering value here, remember the steering value is
+                    * Calcuate steering value here, remember the steering value is
                     * [-1, 1].
                     * NOTE: Feel free to play around with the throttle and speed. Maybe use
                     * another PID controller to control the speed!
