@@ -6,6 +6,11 @@
 #include <iostream>
 
 // PRINTING
+
+
+/*
+ * @brief       Print a vector nicely.
+ */
 template <typename T>
 void vec_print(std::vector<T> v) {
     std::cout << "[";
@@ -22,7 +27,12 @@ void vec_print(std::vector<T> v, std::string name) {
     std::cout << std::endl;
 }
 
+
 // STATISTICS
+
+/*
+ * @brief       Sum a vector.
+ */
 template <typename T>
 T vec_sum(std::vector<T> v) {
     T out = 0;
@@ -32,13 +42,21 @@ T vec_sum(std::vector<T> v) {
     return out;
 }
 
+
 // TODO: Deal with zero-length vectors reasonably.
+/*
+ * @brief       Average the elements of a vector.
+ */
 template<typename T>
 double vec_mean(std::vector<T> v) {
     T sum = vec_sum(v);
     return (double) sum / v.size();
 }
 
+
+/*
+ * @brief       Take the standard deviation of a vector.
+ */
 template<typename T>
 double vec_stdd(std::vector<T> v, double mean) {
     double sum_squared_differences = 0;

@@ -88,8 +88,7 @@ int main() {
     std::vector<PID*> pids = {&pid_steering};//, &pid_throttle};
 
     // Time-average the CTE to get an error value for Twiddle.
-    int nsamples = NSAMPLES;
-    TwiddlerManager twiddler_manager(pids, nsamples, TWIDDLETOL, NDISCARD);
+    TwiddlerManager twiddler_manager(pids, NSAMPLES, TWIDDLETOL, NDISCARD);
 
     std::ofstream cte_log_file;
     cte_log_file.open("cte.csv", std::ios::trunc);

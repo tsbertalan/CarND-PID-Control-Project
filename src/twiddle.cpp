@@ -9,10 +9,17 @@ using namespace std;
 constexpr double DEFAULT_DIFF_PARAMS = 0.01;
 
 
+/*****************************************************************
+ ***************** Twiddle parameters to reduce an error signal. *
+ *****************************************************************/
 
 
-
-Twiddler::Twiddler(int nparams=6, double tol=0.0001) {
+/*
+ * @brief       Construct twiddler.
+ * @param[in]   nparams     Number of parameters to twiddle.
+ * @param[in]   tol         Stopping tolerance for parameter vector step size (absolute sum norm).
+ */
+Twiddler::Twiddler(int nparams=3, double tol=0.0001) {
     vector<double> parameters(nparams, 0);
     vector<double> diff_parameters(nparams, DEFAULT_DIFF_PARAMS);
 
@@ -29,7 +36,12 @@ Twiddler::Twiddler(int nparams=6, double tol=0.0001) {
     declared_convergence = false;
 }
 
-
+// TODO: Replace this spaghetti pile with, Idunno, ravioli?
+/*
+ * @brief       Make changes to parameters vector based on most recent error value.
+ * @param[in]   error       The error which we're trying to minimize.
+ * @return      Whether convergence was achieved
+ */
 bool Twiddler::twiddle(double error) {
 
     // If we previously declared convergence, just exit.
@@ -119,6 +131,9 @@ bool Twiddler::twiddle(double error) {
 }
 
 
+/*
+ * @brief       Trump up a simple comparison to a fancy print.
+ */
 bool Twiddler::check_error(double error) {
     bool result = error < best_error;
     cout << "err=" << error;
@@ -132,6 +147,9 @@ bool Twiddler::check_error(double error) {
 }
 
 
+/*
+ * @brief       If a change in parameter has done well, say so and increase the step size.
+ */
 void Twiddler::succeed(double error) {
     say_time(); cout << "Recording new best error of " << error;
     cout << " and increasing dp[" << i_param << "]." << endl;
@@ -143,6 +161,9 @@ void Twiddler::succeed(double error) {
 }
 
 
+/*
+ * @brief       If a change in parameter has not done well, say so and decrease the step size.
+ */
 void Twiddler::fail(double error) {
     cout << endl; say_time(); cout << "Failed twiddle." << endl;
     say_time(); cout << "Decreasing dp[" << i_param << "]" << endl;
@@ -152,6 +173,9 @@ void Twiddler::fail(double error) {
 }
 
 
+/*
+ * @brief       When we've tried increasing and decreasing a parameter and one or neither worked, continue to the next parameter.
+ */
 void Twiddler::moveOn(double error) {
     // Move on to next parameter.
     say_time(); cout << "Moving on from parameter " << i_param << "." << endl;
@@ -163,11 +187,17 @@ void Twiddler::moveOn(double error) {
 }
 
 
+/*
+ * @brief       Getter for the parameters vector.
+ */
 std::vector<double> Twiddler::get_params() {
     return parameters;
 }
 
 
+/*
+ * @brief       Update/reset the parameters vector.
+ */
 void Twiddler::set_params(vector<double> new_parameters) {
     cout << "Changed p from" << endl;
     vec_print(parameters, "p");
@@ -177,6 +207,9 @@ void Twiddler::set_params(vector<double> new_parameters) {
 }
 
 
+/*
+ * @brief       Update/reset the parameters step vector.
+ */
 void Twiddler::set_diff_params(vector<double> new_diff_parameters) {
     cout << "Changed dp from" << endl;
     vec_print(diff_parameters, "dp");
@@ -186,12 +219,32 @@ void Twiddler::set_diff_params(vector<double> new_diff_parameters) {
 }
 
 
+/*
+ * @brief       Getter for the convergence state.
+ */
 bool Twiddler::is_converged() {
     return declared_convergence;
 }
 
 
-TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, double tol, unsigned int tmin=0) {
+
+/*****************************************************************
+ ***************** Control the parameter-twiddling process. *******
+ *****************************************************************/
+// TODO: Maybe merge this with the Twiddle object.
+// TODO: Maybe merge both with the PID object.
+
+
+/*
+ * @brief       Construct the twiddler-manager.
+ * @param       pids        A vector of PID objects whose parameters we're going to twiddle
+ * @param       tmax        An upper limit on how many samples to accumulate before doing a twiddle iteration
+ * @param       tol         Tolerance for the twiddler's convergence
+ * @param       tmin        A lower limit on how many samples to discard before starting accumulation
+ */
+TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, double tol=0.001, unsigned int tmin=0)
+        : twiddler(pids.size() * 3, tol)
+{
     this->pids = pids;
     this->tmax = tmax;
     this->tmin = tmin;
@@ -202,8 +255,6 @@ TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, dou
     lambda_stdd = 1.0;
 
     int nparams = pids.size() * 3;
-
-    twiddler = Twiddler(nparams, tol);
 
     // Extract the existing parameters.
     vector<double> new_parameters(nparams);
@@ -227,6 +278,9 @@ TwiddlerManager::TwiddlerManager(std::vector<PID*>& pids, unsigned int tmax, dou
 }
 
 
+/*
+ * @brief       Record an error value and maybe do some twiddling with it.
+ */
 void TwiddlerManager::process_error(double error) {
 
     // Save the error history.

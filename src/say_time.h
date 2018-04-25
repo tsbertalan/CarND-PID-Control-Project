@@ -4,7 +4,9 @@
 #include <chrono>
 #include <iostream>
 
-
+/*
+ * @brief       Get the current time in milliseconds since epoch.
+ */
 inline long epoch_time() {
     using namespace std::chrono;
     long ms = duration_cast<milliseconds> (
@@ -14,6 +16,9 @@ inline long epoch_time() {
 }
 
 
+/*
+ * @brief       Print the current time without line termination.
+ */
 inline void say_time() {
     long ms = epoch_time();
     std::cout << ms << " | ";
