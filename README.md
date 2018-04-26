@@ -208,7 +208,7 @@ increasing `Kp` as much, and even by approximately quartering `Kd`.
 
 After this abortive heuristic start and viewing recordings as in the figure below, I used several intuitions about the PID coefficients to make manual adjustments to the PID coefficients.
 
-![error recording](recording.png)
+![error recording](images/recording.png)
 
 This plot was created with `Kp=0.11`, `Ki=0.001`, and `Kd=2.0`, with a speed target of 40 mph, and demonstrates several pathological traits. Note that all of these PID tuning results were obtained with a target speed of 40 mph. At slower or faster speeds, different coefficients would be appropriate; providing a further motivation for future model-based control.
 
@@ -237,7 +237,13 @@ With these observations, it was possible to produce a reasonably good initial va
 
 ##### Online PID training with coordinate ascent, or "twiddle"
 
+![twiddle run in error](images/error_hist.png)
 
+![twiddle run in parameters](images/space_trajectory.png)
+
+![initial characteristic error trajectory](images/early.png)
+
+![final characteristic error trajectory](images/late.png)
 
 
 
