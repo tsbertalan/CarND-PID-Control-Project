@@ -218,7 +218,11 @@ creating many small spikes in the steering MV.
 Decreasing `Kd` amplifies less the high-frequency noise, 
 but simultaneously loses the low-frequency dampening effect by which the derivative term anticipates overshoots.
 
-Second, between about 0.08 and 0.2 minutes, as the car rounds a broad curve, the relatively weak `Ki` coefficient leads to accumulated positive error being underpenalized. At higher speeds, this is difficult to avoid without prompting an exploding integral term,
+While one possible conclusion from this amplification by the `Kd` term of of small fluctuations
+is that `Kd` is too large, another is that a smoothed measure of the time derivative of the error would work better,
+such as the mean of several recent values, or (perhaps equivalently), a short-time linear fit.
+
+Second, between about 0.08 and 0.2 minutes, as the car rounds a broad curve, the relatively weak `Ki` coefficient leads to an accumulating positive error being underpenalized. At higher speeds, this is difficult to avoid without prompting an exploding integral term,
 but at speeds lower than 40 mph, this diagnosis might might make a stronger `Ki` coefficient more feasible.
 
 Third, the fact that the oscillations in the MV are π/2 out of phase with the PV
