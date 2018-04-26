@@ -189,12 +189,13 @@ try:
 except IndexError:
     pass
 
-ax2.plot(mae_history_times, mae_history, 
-    color='blue', label='MAE$(t)$', linewidth=1, linestyle='--')
-ax2.plot(std_history_times, std_history, 
-    color='blue', label='STD$(t)$', linewidth=1, linestyle='-.')
-ax2.plot(obj_history_times, obj_history, 
-    color='blue', linewidth=1, linestyle='-', label='objective$(t)$')
+if len(mae_history_times) > 0:
+    ax2.plot(mae_history_times, mae_history, 
+        color='blue', label='MAE$(t)$', linewidth=1, linestyle='--')
+    ax2.plot(std_history_times, std_history, 
+        color='blue', label='STD$(t)$', linewidth=1, linestyle='-.')
+    ax2.plot(obj_history_times, obj_history, 
+        color='blue', linewidth=1, linestyle='-', label='objective$(t)$')
 
 ax.plot(cte_history_times, cte_history,
         color='black', alpha=.25, linestyle='-', label='raw cte$(t)$')

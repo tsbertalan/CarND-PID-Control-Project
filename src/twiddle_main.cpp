@@ -81,7 +81,8 @@ int main() {
     // Finally, after examining the PV(t), CV(t) recordings, I guessed that the large Kd value
     // was causing some of the overreacting to small disturbances, and so reduced it from the ZN prediction.
     // Basically, I took very little from ZN.
-    pid_steering.Init(.11, .001, 2);
+//    pid_steering.Init(.11, .001, 2);
+    pid_steering.Init(0.1, 0.001, 0.8);
 
     pid_throttle.Init(0.3, 0, 0.02);
 

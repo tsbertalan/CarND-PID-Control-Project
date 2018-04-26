@@ -5,7 +5,7 @@
 #include <math.h>
 #include <algorithm>  // std::min, std::max
 
-#define TARGETSPEED 30.0
+#define TARGETSPEED 40.0
 #define MAXANGLE 25.0
 
 // for convenience
@@ -38,7 +38,9 @@ int main() {
 
     PID pid_steering;
     PID pid_throttle;
-    pid_steering.Init(0.320324, 0.00199993, 4.00688);
+//    pid_steering.Init(0.320324, 0.00199993, 4.00688);
+    pid_steering.Init(0.08, 0.002, 0.8);
+//    pid_steering.Init(.3, .0059939, 4.1709);
     pid_throttle.Init(0.3, 0, 0.02);
 
     h.onMessage([&pid_steering, &pid_throttle](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
