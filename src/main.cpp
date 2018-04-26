@@ -38,7 +38,7 @@ int main() {
 
     PID pid_steering;
     PID pid_throttle;
-    pid_steering.Init(0.110293, 0.000680556, 0.797399);
+    pid_steering.Init(0.174668, 0.000780556, 1.6099);
     pid_throttle.Init(0.3, 0, 0.02);
 
     h.onMessage([&pid_steering, &pid_throttle](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {

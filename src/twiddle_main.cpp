@@ -15,7 +15,7 @@
 #define TARGETSPEED 40.0
 #define CREEPSPEED 3.0
 #define MAXANGLE 25.0
-#define NSAMPLES 1600
+#define NSAMPLES 6400
 #define NDISCARD 32
 #define TWIDDLETOL 0.001
 
@@ -81,7 +81,7 @@ int main() {
     // Finally, after examining the PV(t), CV(t) recordings, I guessed that the large Kd value
     // was causing some of the overreacting to small disturbances, and so reduced it from the ZN prediction.
     // Basically, I took very little from ZN.
-    pid_steering.Init(0.1, 0.001, 0.8);
+    pid_steering.Init(0.110293, 0.000680556, 0.797399);
 
     pid_throttle.Init(0.3, 0, 0.02);
 
