@@ -1,6 +1,13 @@
 # PID Controller in C++
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
+In this project, I implement a simple proportional-integral-derivative (PID) controller 
+for setting both the throttle and the steering angle 
+of a nonholonomic (Ackermann-like) vehicle.
+While the PID implementation itself is simple,
+significant effort was expended (to dubious effect)
+using coordinate descent to tune the PID coefficients.
+
 
 ## Implementation Details
 
@@ -92,6 +99,10 @@ so I limited the speed controller to positive outputs.
 
 ##### Rough PID tuning by Ziegler-Nichols and intuition.
 
+While it was easy enough to set the coefficients for the throttle controller 
+with a little trial and error and get acceptable performance, 
+the coefficients for the steering controller were much more touchy.
+
 The [Ziegler-Nichols (ZN)][2] method is a method for setting the `Kp`, `Ki`, and `Kd` coefficients for a PID controller heuristically in terms of the characteristic relaxation oscillation frequency of the system and in terms of a "critical" value for the `Kp` coefficient, at which this oscillation begins while the other two coefficients are set to zero. However, the testing procedure for measuring these coefficients should normally involve a step change in the set point, whereas the simulation environment we have available only allows for smoothly a varying set point.
 
 Oscillations in the CTE are abundant, and frequently seem to have approximately the same period, which I very approximatley measured as 1.635 seconds, which I divide by the PID sampling period of about 0.049 s to get `Tc`, since the PID code above is not in units of seconds. Measuring the critical value of `Kp` was more difficult, and I believe that the lack of a proper set point perturbation procedure biased my estimated value of `Kc=0.05` low.
@@ -141,13 +152,13 @@ With these observations, it was possible to produce a reasonably good initial va
 
 
 
-##### Online PID training with coordinate ascent, or "twiddle"
+##### Online PID training with coordinate descent, or "twiddle"
 
 After getting the PID coefficients in the neighborhood of good values
 by a combination of ZN and intuition about their effects,
-I ran coordinate ascent  (CA) as suggested in an attempt at fine-tuning. 
+I ran coordinate descent (CD) as suggested in an attempt at fine-tuning. 
 
-CA keeps track of both the parameter vector and a step size vector
+CD keeps track of both the parameter vector and a step size vector
  at each iteration.
 At each step, we loop over the parameters, first attempting an increase by the corresponding step size, then a decrease, then a return to the original value.
 If either the increase or decrease succeeded 
@@ -211,7 +222,10 @@ Additionally, a teleport command would allow for recovery after crashes due to b
 
 
 
-## Dependencies
+## Building and Running
+
+
+##### Dependencies
 
 * cmake >= 3.5
  * All OSes: [click here for installation instructions](https://cmake.org/install/)
@@ -236,16 +250,18 @@ Additionally, a teleport command would allow for recovery after crashes due to b
 
 There's an experimental patch for windows in this [PR](https://github.com/udacity/CarND-PID-Control-Project/pull/3)
 
-
-## Basic Build Instructions
+##### Basic Build Instructions
 
 1. Clone this repo.
 2. Make a build directory: `mkdir build && cd build`
 3. Compile: `cmake .. && make`
 4. Run it: `./pid`
-5. Alternately, run the twiddle tuning attept: `./twiddle`
+5. Download the latest [Udacity Term 2 Simulator][4] and extract.
+6. Run `term2_sim.x86_64` or `term2_sim.x86` as appropriate, and select the PID sim.
+7. Alternately, run the twiddle tuning attept: `./twiddle`
 
 
 [1]: https://www.controlglobal.com/articles/2014/controllers-direct-vs-reverse-acting-control/
 [2]: https://en.wikipedia.org/wiki/Ziegler%E2%80%93Nichols_method
 [3]: https://www.crossco.com/blog/basics-tuning-pid-loops
+[4]: https://github.com/udacity/self-driving-car-sim/releases
