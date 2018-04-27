@@ -38,7 +38,19 @@ int main() {
 
     PID pid_steering;
     PID pid_throttle;
+
+    // Starting point for twiddle:
+    //pid_steering.Init(0.110293, 0.000680556, 0.797399);
+
+    // Final from first log (shorter sampling period):
+    //pid_steering.Init(0.225293, 0.000780556, 1.6099);
+
+    // Final from second log (longer sampling period):
+    //pid_steering.Init(0.250293, 0.00100112, 2.19022);
+
+    // From a later, lower-p[0] point in the first log:
     pid_steering.Init(0.174668, 0.000780556, 1.6099);
+
     pid_throttle.Init(0.3, 0, 0.02);
 
     h.onMessage([&pid_steering, &pid_throttle](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {

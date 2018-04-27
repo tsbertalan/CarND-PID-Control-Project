@@ -2,11 +2,12 @@
 #define PID_H
 
 #include <deque>
-
+#include "say_time.h"
 
 class PID {
 private:
   std::deque<double> cte_history;
+  long last_t;
 
 public:
   /*

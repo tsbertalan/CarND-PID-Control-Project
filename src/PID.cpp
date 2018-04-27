@@ -20,6 +20,7 @@ PID::PID() {
     p_error = 0;
     i_error = 0;
     d_error = 0;
+    last_t = epoch_time();
 }
 
 PID::~PID() {}
@@ -39,10 +40,17 @@ void PID::Init(double Kp, double Ki, double Kd) {
  * @param[in]   cte             the error signal to be driven to zero
  */
 void PID::UpdateError(double cte) {
+
+    // dt is often about 49, so this factor is often 1. However, if it varies,
+    // this might help the given parameters generalize better.
+    long t = epoch_time();
+    double dt = ((double (t)) - last_t) / 49.0;
+    last_t = t;
+
     cte_history.push_back(cte);
-    d_error = cte - p_error;
+    d_error = (cte - p_error) / dt;
     p_error = cte;
-    i_error += cte;
+    i_error += cte * dt;
 
     if(cte_history.size() >= MAX_CTE_HISTORY_LENGTH) {
         i_error -= cte_history[0];

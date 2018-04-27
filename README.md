@@ -15,10 +15,17 @@ The basic PID loop is pretty simple.
  * @param[in]   cte             the error signal to be driven to zero
  */
 void PID::UpdateError(double cte) {
+
+    // dt is often about 49, so this factor is often 1. However, if it varies,
+    // this might help the given parameters generalize better.
+    long t = epoch_time();
+    double dt = ((double (t)) - last_t) / 49.0;
+    last_t = t;
+
     cte_history.push_back(cte);
-    d_error = cte - p_error;
+    d_error = (cte - p_error) / dt;
     p_error = cte;
-    i_error += cte;
+    i_error += cte * dt;
 
     if(cte_history.size() >= MAX_CTE_HISTORY_LENGTH) {
         i_error -= cte_history[0];
@@ -30,11 +37,14 @@ void PID::UpdateError(double cte) {
 
 Calculating the `d_error`, `p_error`, and `i_error` terms
 is straightforward.
-One possible improvement would be to measure the actual time difference between updates
-so that we actually approximate the time derivative of the error and the integral (over time) of the error
-in the correct units.
-This might give more reproducible results across computers. 
-I measured an update time of about 49 milliseconds on one machine, but didn't verify that this was the same across multiple.
+In order to make results more consistent across different computers, 
+I measure the actual time difference between updates
+and use this in my derivative and integral approximations.
+I measured an update time of about 49 milliseconds on one machine,
+but measured update times as high as 72 ms on other machines.
+To maintain backwards compatibility with previously-determined `Ki` and `Kd` coefficients,
+I divide `dt` by 49, so the time unit is now an arbitrarily-determined "typical sampling period"
+rather than milliseconds.
 
 In addition to computing the three error terms,
 I don't add up error terms for the integral term indefinitely.
