@@ -215,6 +215,8 @@ Some regularization might be helpful here; e.g. adding a term to the objective m
 ![twiddling with more samples per parameter update](images/longerSamples.png)
 ![twiddling with more samples per parameter update](images/longerSamples-space_trajectory.png)
 
+##### Suggestions for the simulator
+
 **This process would have been much easier 
 if it were possible to issue a "teleport" command to the simulator.**
 This would allow for a consistent starting point for each test run, rather than just using a long run (around the whole track one or two times) and online tuning.
