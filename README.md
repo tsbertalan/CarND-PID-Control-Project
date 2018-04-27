@@ -2,120 +2,6 @@
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
 
-## Git commits.
-    Use the parameters from twiddle, FWIW.
-----
-
-    Remove some cruft.
-
-
-    Run at a little higher speed.
-    
-    It appears that higher speeds require generally smaller PID parameters.
-    This is reflected in the kinematic motion model
-    
-    ψ(t+1) = ψ(t) + v/L ∗ δ ∗ dt
-    
-    where ψ is the yaw angle,
-    v is the forward velocity,
-    L is the distance from axel to center of mass,
-    and δ is the turn angle.
-    
-    I.e., yaw rate depends on speed.
-----
-
-    Try to get somethign useful out of Ziegler-Nichols.
-----
-
-    Change initial point; emphasize MAE over STD.
-    
-    More convergence; obvious increasing-p[0] (Kp) section.
-    Final parameters:
-    [0.320324, 0.00199993, 4.00688, ]
-----
-
-    Use a larger step increase/decrease factor.
-    
-    Some convergence, but still could be much better error.
-----
-
-    With a larger sample, convergence is visible, but takes hrs.
-----
-
-    Decouple throttle from steering; limit i term history.
-----
-
-    More samples helps noise; hence convergence; some
-    
-    After trying these steps for manual PID tuning from
-    https://www.crossco.com/blog/basics-tuning-pid-loops :
-    
-    * Start with a low proportional and no integral or derivative.
-    * Double the proportional until it begins to oscillate, then halve it.
-    * Implement a small integral.
-    * Double the integral until it starts oscillating, then halve it.
-    
-    I note that:
-    
-    * Too little kp (with ~0) for the others naturally leads to a very
-    sluggish response.
-    * Oscillation often comes from too much kp, but sometimes from too
-    much ki.
-    * ki is needed for the turns, which manifest as systematic error.
-    * kd helps combat oscillations--when e.g. error is negative, but the
-    slope is strongly positive, it's ok to slow down some in anticipation of
-    reaching 0.
-    
-    I'll try next with even more samples per step. Hopefully it will be
-    slower per step, but more of the steps will result in successful
-    objective reductions, and so will be kept.
-----
-
-    Record raw CTE as well.
-----
-
-    Update error history plot.
-----
-
-    Tag prints with the time.
-    
-    This allows a proper x axis.
-----
-
-    Discard start of sample.
-    
-    Improve logging and plotting.
-----
-
-    Allow live-ish plotting.
-----
-
-    Improve prints; put std in obj.
-    
-    Don't do another unnecessary run after success or failure of a twiddle.
-----
-
-    Fix some bugs; seems to mostly work now.
-    
-    I'll let it run over the night.
-----
-
-    Do online twiddling.
-    
-    However, this quickly segfaults *on the JSON parsing line* (68 in
-    twiddle_main.cpp).
-    
-    Run like
-    
-    ./build.sh && ./twiddle.sh
-----
-
-    Make a first draft of twiddle tuning.
-----
-
-    Add source and build target for twiddle.
-
-
 ## Implementation Details
 
 
@@ -211,6 +97,16 @@ After this abortive heuristic start and viewing recordings as in the figure belo
 ![error recording](images/recording.png)
 
 This plot was created with `Kp=0.11`, `Ki=0.001`, and `Kd=2.0`, with a speed target of 40 mph, and demonstrates several pathological traits. Note that all of these PID tuning results were obtained with a target speed of 40 mph. At slower or faster speeds, different coefficients would be appropriate; providing a further motivation for future model-based control.
+Generally, it appears that higher speeds require  smaller PID parameters.
+This is reflected in the kinematic motion model
+
+    ψ(t+1) = ψ(t) + v/L ∗ δ ∗ dt
+
+where ψ is the yaw angle,
+v is the forward velocity,
+L is the distance from axel to center of mass,
+and δ is the turn angle.
+I.e., yaw rate depends on speed.
 
 First, the relatively large value for `Kd` magnified small instantaneous deviations in the CTE PV,
 (and especially the likely spurious deviation at 0.15 minutes as the car exits the bridge),
@@ -237,13 +133,71 @@ With these observations, it was possible to produce a reasonably good initial va
 
 ##### Online PID training with coordinate ascent, or "twiddle"
 
+After getting the PID coefficients in the neighborhood of good values
+by a combination of ZN and intuition about their effects,
+I ran coordinate ascent  (CA) as suggested in an attempt at fine-tuning. 
+
+CA keeps track of both the parameter vector and a step size vector
+ at each iteration.
+At each step, we loop over the parameters, first attempting an increase by the corresponding step size, then a decrease, then a return to the original value.
+If either the increase or decrease succeeded 
+in decreasing some loss function (discussed below),
+we increase the corresponding step size by 50% and move on to the next parameter.
+If both increasing and decreasing the parameter increased the loss,
+we decrease the step size by 50% and move on to the next parameter.
+We repeatedly loop through the parameters making these changes ("twiddling")
+until the sum of the step size vector is below some threshold.
+
+For this project, I used as loss function the sum of the mean absolute CTE
+and the standard deviation of the CTE over a short period of sample driving.
+Using a different loss function would likely provide very different results.
+However, experimenting with the loss was an expensive proposition
+becase each sample required several minutes of autonomous driving.
+If samples were too short, the signal of response to parameter changes
+would be drowned out by the noise of the naturally variable test course.
+
+Below, I plot the objective function and its two components over several hours of twiddling. Vertical yellow lines show the restarts of the inner loop over parameters. Vertical dashed salmon-colored lines show actual decreases of the objective, after which the previously set parameters were kept. There are not many of these.
+
 ![twiddle run in error](images/error_hist.png)
+
+The fact that this is a fine-tuning process, rather than a from-scratch
+parameter selection, is visible both in the sparsity of these dashed markers
+and in the following plot of evolution through parameter space.
+the `{p[0], p[1], p[2]}` vector corresponds to the three `Kp`, `Ki`, `Kd` PID coefficients.
+Scattered points show the many attepts at parameter steps, most of which were rejected. As many rejections accumulate, the steps get smaller and smaller, eventually settling on a point near the start. 
+The red line shows the short trajectory of accepted parameter updates,
+which even includes some backtracking in `p[0].`
 
 ![twiddle run in parameters](images/space_trajectory.png)
 
-![initial characteristic error trajectory](images/early.png)
+Nevertheless, there was some qualitatively notable improvement
+in the line the car takes, as visible in the following two blow-ups of the previous error history plot. The large swing from negative to positive CTE around 1.8 min
+corresponds to the same curve on the test track as the similar, 
+but slightly smaller swing around 141.5 min in the second figure.
+However, the subsequent negative swing (at 2 min and 141.7 min, respectively)
+is noticably reduced in the second plot, 
+as is the overcorrection following that (2.2 min and 141.8 min).
+These results were typical of laps near the beginning of training 
+and laps near the end.
 
+![initial characteristic error trajectory](images/early.png)
 ![final characteristic error trajectory](images/late.png)
+
+In order to further dampen the noise course noise and magnify the signal from parameter changes, I quadrupled the number of samples to evaluate each parameter 
+change to about five minutes (or about 4.5 laps). 
+This gave the solver a better idea of what the effect of each parameter choice was, allowing for more accepted parameter modifications. (See figures below.)
+However, it became apparent that the chosen objective function had the effect of generally keeping close to the centerline 
+at the expense of making large adjustments that sometimes led to catastrophe.
+(Eventually the run ends with an unrecoverable crash.)
+Some regularization might be helpful here; e.g. adding a term to the objective minimizing interventions.
+
+![twiddling with more samples per parameter update](images/longerSamples.png)
+![twiddling with more samples per parameter update](images/longerSamples-space_trajectory.png)
+
+**This process would have been much easier 
+if it were possible to issue a "teleport" command to the simulator.**
+This would allow for a consistent starting point for each test run, rather than just using a long run (around the whole track one or two times) and online tuning.
+Additionally, a teleport command would allow for recovery after crashes due to bad parameters, further allowing for more aggressive parameter steps, or indeed other optimization methods. While I'm mentioning possible improvements to the simulator, **it would be nice to be able to simulate multiple vehicles in parallel,** say, to approximate a gradient vector stochastically. Of course, this would be easier if the simulator offered a real "fastest" rendering mode (the current "fastest" mode is visually indistinguishable from the "fantastic" mode).
 
 
 
